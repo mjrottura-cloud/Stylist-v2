@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>RIG — Personal Stylist</title>
+<meta name="description" content="Your closet, catalogued. Your outfits, decided.">
+<meta name="theme-color" content="#14202E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RIG">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2314202E'/><text x='50' y='68' font-size='52' text-anchor='middle' fill='%23B08D57' font-family='Georgia'>R</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#14202E;          /* deep navy ink */
+  --ink-soft:#2A3A4D;
+  --paper:#FAFAF7;        /* near-white canvas */
+  --card:#FFFFFF;
+  --camel:#B08D57;        /* camel / bronze accent */
+  --camel-deep:#8F6E3D;
+  --slate:#5C6B7A;        /* muted text */
+  --hairline:#E4E2DB;
+  --danger:#A83A32;
+  --ok:#3E6B4F;
+  --radius:14px;
+  --nav-h:64px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Public Sans',system-ui,sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  min-height:100vh;
+  padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px);
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;font-size:16px;color:var(--ink)}
+img{display:block;max-width:100%}
+
+/* ---------- type ---------- */
+.display{font-family:'Marcellus',serif;letter-spacing:.04em}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--camel-deep)}
+
+/* ---------- header ---------- */
+header{
+  position:sticky;top:0;z-index:40;
+  background:var(--ink);color:var(--paper);
+  padding:calc(env(safe-area-inset-top) + 14px) 20px 14px;
+  display:flex;align-items:baseline;justify-content:space-between;
+}
+header .wordmark{font-family:'Marcellus',serif;font-size:22px;letter-spacing:.22em}
+header .wordmark span{color:var(--camel)}
+header .tag{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#9AA7B4}
+
+/* ---------- layout ---------- */
+main{max-width:680px;margin:0 auto;padding:20px 16px 8px}
+.view{display:none}
+.view.active{display:block;animation:fadein .25s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.view.active{animation:none}}
+
+.section-head{display:flex;align-items:baseline;justify-content:space-between;margin:6px 2px 14px}
+.section-head h2{font-family:'Marcellus',serif;font-size:24px;font-weight:400}
+.section-head .count{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--slate);letter-spacing:.08em}
+
+/* ---------- buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:13px 20px;border-radius:999px;font-weight:600;font-size:14.5px;
+  background:var(--ink);color:var(--paper);transition:transform .08s ease,opacity .15s;
+  border:1.5px solid var(--ink);
+}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.camel{background:var(--camel);border-color:var(--camel);color:#fff}
+.btn.small{padding:8px 14px;font-size:13px}
+.btn.block{width:100%}
+.btn:disabled{opacity:.5;pointer-events:none}
+.btn.danger{background:transparent;border-color:var(--danger);color:var(--danger)}
+
+/* ---------- chips ---------- */
+.chip-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.chip{
+  padding:9px 15px;border-radius:999px;border:1.5px solid var(--hairline);
+  background:var(--card);font-size:13.5px;font-weight:500;color:var(--ink-soft);
+  transition:all .12s ease;
+}
+.chip.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.chip.on.camel-on{background:var(--camel);border-color:var(--camel)}
+
+/* ---------- closet grid ---------- */
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(min-width:560px){.grid{grid-template-columns:repeat(3,1fr)}}
+.garment{
+  background:var(--card);border:1px solid var(--hairline);border-radius:var(--radius);
+  overflow:hidden;position:relative;text-align:left;width:100%;
+  transition:transform .1s ease, box-shadow .15s ease;
+}
+.garment:active{transform:scale(.98)}
+.garment .ph{aspect-ratio:3/3.4;background:#EFEDE6;position:relative;overflow:hidden}
+.garment .ph img{width:100%;height:100%;object-fit:cover}
+.garment .meta{padding:10px 12px 12px;border-top:1px solid var(--hairline)}
+.garment .idx{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.14em;color:var(--camel-deep);text-transform:uppercase}
+.garment .nm{font-family:'Marcellus',serif;font-size:15px;margin-top:3px;line-height:1.25}
+.garment .sub{font-size:11.5px;color:var(--slate);margin-top:3px}
+.garment .badges{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;pointer-events:none}
+.badge{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+  background:rgba(20,32,46,.82);color:#fff;padding:4px 8px;border-radius:6px}
+.badge.laundry{background:rgba(168,58,50,.9)}
+.badge.fav{background:var(--camel)}
+.garment.analyzing .ph::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.55) 50%,transparent 70%);
+  animation:shimmer 1.2s infinite;
+}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+
+/* ---------- empty states ---------- */
+.empty{
+  border:1.5px dashed var(--hairline);border-radius:var(--radius);
+  padding:44px 24px;text-align:center;color:var(--slate);background:#FDFDFB;
+}
+.empty .display{font-size:19px;color:var(--ink);margin-bottom:8px}
+.empty p{font-size:13.5px;line-height:1.55;max-width:320px;margin:0 auto 16px}
+
+/* ---------- cards / panels ---------- */
+.panel{background:var(--card);border:1px solid var(--hairline);border-radius:var(--radius);padding:18px;margin-bottom:14px}
+.panel h3{font-family:'Marcellus',serif;font-size:18px;font-weight:400;margin-bottom:4px}
+.panel .hint{font-size:12.5px;color:var(--slate);line-height:1.5}
+.field{margin:14px 0 4px}
+.field label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--slate);margin-bottom:7px}
+.field input[type=text],.field input[type=password],.field input[type=number],.field select,.field textarea{
+  width:100%;padding:12px 14px;border:1.5px solid var(--hairline);border-radius:10px;background:#fff;
+}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--camel);outline-offset:1px;border-color:var(--camel)}
+.field textarea{resize:vertical;min-height:70px}
+
+/* ---------- outfit results ---------- */
+.outfit{
+  background:var(--card);border:1px solid var(--hairline);border-radius:var(--radius);
+  padding:16px;margin-bottom:16px;
+}
+.outfit .o-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:12px}
+.outfit .o-title{font-family:'Marcellus',serif;font-size:19px;line-height:1.2}
+.outfit .o-pieces{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+.outfit .o-pieces::-webkit-scrollbar{display:none}
+.o-piece{flex:0 0 96px;text-align:center}
+.o-piece .pph{width:96px;height:110px;border-radius:10px;overflow:hidden;background:#EFEDE6;border:1px solid var(--hairline)}
+.o-piece .pph img{width:100%;height:100%;object-fit:cover}
+.o-piece .pnm{font-size:10.5px;color:var(--slate);margin-top:5px;line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.outfit .o-why{font-size:13.5px;line-height:1.6;color:var(--ink-soft);margin:12px 0 0;
+  border-left:2px solid var(--camel);padding-left:12px}
+.outfit .o-tips{font-size:12.5px;color:var(--slate);line-height:1.55;margin-top:10px}
+.outfit .o-missing{margin-top:12px;background:#F6F3EC;border-radius:10px;padding:12px}
+.outfit .o-missing .mono{color:var(--camel-deep);margin-bottom:6px;display:block}
+.outfit .o-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+
+/* shop links */
+.shop-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.shop-links a{
+  font-size:12px;font-weight:600;color:var(--ink);text-decoration:none;
+  border:1.5px solid var(--hairline);border-radius:999px;padding:7px 13px;background:#fff;
+  display:inline-flex;align-items:center;gap:5px;
+}
+.shop-links a:hover{border-color:var(--camel);color:var(--camel-deep)}
+.shop-card{background:var(--card);border:1px solid var(--hairline);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.shop-card .sc-type{font-family:'Marcellus',serif;font-size:17px}
+.shop-card .sc-desc{font-size:13.5px;color:var(--ink-soft);line-height:1.55;margin-top:6px}
+.shop-card .sc-why{font-size:12.5px;color:var(--slate);line-height:1.5;margin-top:8px;border-left:2px solid var(--camel);padding-left:10px}
+
+/* ---------- bottom nav ---------- */
+nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:50;
+  background:var(--ink);
+  padding-bottom:env(safe-area-inset-bottom);
+  display:flex;justify-content:space-around;
+  border-top:1px solid #223140;
+}
+nav button{
+  flex:1;padding:10px 4px 9px;color:#8B99A8;font-size:10px;font-weight:600;
+  display:flex;flex-direction:column;align-items:center;gap:3px;letter-spacing:.03em;
+}
+nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--camel)}
+
+/* ---------- modal ---------- */
+.modal-bg{
+  position:fixed;inset:0;background:rgba(20,32,46,.55);z-index:60;
+  display:none;align-items:flex-end;justify-content:center;
+}
+.modal-bg.open{display:flex}
+.modal{
+  background:var(--paper);width:100%;max-width:680px;max-height:92vh;overflow-y:auto;
+  border-radius:20px 20px 0 0;padding:20px 18px calc(24px + env(safe-area-inset-bottom));
+  animation:slideup .25s ease;
+}
+@keyframes slideup{from{transform:translateY(40px);opacity:.5}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.modal{animation:none}}
+.modal .grabber{width:40px;height:4px;border-radius:2px;background:var(--hairline);margin:0 auto 16px}
+.modal .m-photo{border-radius:var(--radius);overflow:hidden;background:#EFEDE6;max-height:44vh}
+.modal .m-photo img{width:100%;height:100%;object-fit:contain;max-height:44vh}
+.tag-pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tag-pill{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  background:#EFECE4;color:var(--ink-soft);padding:5px 10px;border-radius:6px}
+
+/* ---------- loading / toast ---------- */
+.loader{display:flex;flex-direction:column;align-items:center;gap:14px;padding:40px 20px;text-align:center}
+.loader .ring{width:34px;height:34px;border:3px solid var(--hairline);border-top-color:var(--camel);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader p{font-size:13px;color:var(--slate)}
+#toast{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + 20px);
+  background:var(--ink);color:var(--paper);padding:11px 18px;border-radius:999px;
+  font-size:13px;font-weight:500;z-index:70;opacity:0;pointer-events:none;transition:opacity .2s;
+  max-width:88vw;text-align:center;
+}
+#toast.show{opacity:1}
+
+/* misc */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.divider{height:1px;background:var(--hairline);margin:18px 0}
+.error-box{background:#FBEFEE;border:1px solid #E4C4C1;color:var(--danger);border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.5;margin:10px 0}
+.subtle-link{font-size:12.5px;color:var(--slate);text-decoration:underline;background:none;padding:4px}
+.stat-row{display:flex;gap:10px;margin-bottom:14px}
+.stat{flex:1;background:var(--card);border:1px solid var(--hairline);border-radius:12px;padding:12px;text-align:center}
+.stat .n{font-family:'Marcellus',serif;font-size:22px}
+.stat .l{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);margin-top:2px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wordmark">RIG<span>.</span></div>
+  <div class="tag">Rig of the day, decided</div>
+</header>
+
+<main>
+  <!-- ============ CLOSET ============ -->
+  <section id="view-closet" class="view active">
+    <div class="section-head">
+      <h2>The Closet</h2>
+      <span class="count" id="closet-count"></span>
+    </div>
+    <div class="two-col" style="margin-bottom:14px">
+      <button class="btn" id="btn-camera">Snap a piece</button>
+      <button class="btn ghost" id="btn-upload">Upload photos</button>
+    </div>
+    <input type="file" id="file-camera" accept="image/*" capture="environment" hidden>
+    <input type="file" id="file-upload" accept="image/*" multiple hidden>
+    <div class="chip-row" id="closet-filters"></div>
+    <div id="closet-grid" class="grid"></div>
+    <div id="closet-empty" class="empty" style="display:none">
+      <div class="display">An empty rack</div>
+      <p>Photograph each piece against a plain background. RIG catalogs the color, category, formality, and season automatically.</p>
+      <button class="btn camel" onclick="document.getElementById('file-camera').click()">Add your first piece</button>
+    </div>
+  </section>
+
+  <!-- ============ STYLE ME ============ -->
+  <section id="view-style" class="view">
+    <div class="section-head"><h2>Style Me</h2></div>
+
+    <div class="panel">
+      <h3>What's the occasion?</h3>
+      <p class="hint">Pick one or write your own. This sets the formality and mood.</p>
+      <div class="chip-row" id="occasion-chips"></div>
+      <div class="field">
+        <label for="occasion-custom">Or describe it</label>
+        <input type="text" id="occasion-custom" placeholder="e.g. Meeting my girlfriend's parents">
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Where in the world?</h3>
+      <p class="hint">Optional — location changes what looks right. Aperitivo in Rome reads different than dinner in Providence.</p>
+      <div class="field">
+        <label for="style-destination">Location or destination</label>
+        <input type="text" id="style-destination" placeholder="e.g. Florence, Italy">
+      </div>
+      <div class="field">
+        <label for="style-weather">Weather (optional)</label>
+        <input type="text" id="style-weather" placeholder="e.g. 85° and humid / cold and rainy">
+      </div>
+      <div class="field">
+        <label for="trip-days">Trip length in days (only for packing)</label>
+        <input type="number" id="trip-days" min="1" max="30" placeholder="5">
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Build around a piece?</h3>
+      <p class="hint">Optional — anchor every outfit to one item you want to wear.</p>
+      <div class="chip-row" id="anchor-chips"></div>
+    </div>
+
+    <button class="btn block camel" id="btn-generate" style="margin:6px 0 10px">Style me</button>
+    <button class="btn block ghost" id="btn-pack">Pack for a trip instead</button>
+
+    <div id="style-results" style="margin-top:20px"></div>
+  </section>
+
+  <!-- ============ SHOP ============ -->
+  <section id="view-shop" class="view">
+    <div class="section-head"><h2>Shop the Gap</h2></div>
+    <div class="panel">
+      <h3>Start with a piece you own</h3>
+      <p class="hint">RIG looks at the actual photo and suggests exactly what to buy to complete it — with ready-made searches at real stores.</p>
+      <div class="chip-row" id="shop-anchor-chips"></div>
+      <div class="field">
+        <label for="shop-goal">What are you missing? (optional)</label>
+        <input type="text" id="shop-goal" placeholder="e.g. pants that work with this / shoes for going out">
+      </div>
+      <div class="field">
+        <label for="shop-budget">Budget</label>
+        <select id="shop-budget">
+          <option value="student budget (under $60 per piece)">Student — under $60</option>
+          <option value="mid-range ($60–150 per piece)" selected>Mid-range — $60–150</option>
+          <option value="investment pieces ($150+)">Investment — $150+</option>
+        </select>
+      </div>
+      <button class="btn block camel" id="btn-shop" style="margin-top:12px">Find pieces to buy</button>
+    </div>
+    <div id="shop-results"></div>
+  </section>
+
+  <!-- ============ LOOKBOOK ============ -->
+  <section id="view-lookbook" class="view">
+    <div class="section-head">
+      <h2>Lookbook</h2>
+      <span class="count" id="lookbook-count"></span>
+    </div>
+    <div id="lookbook-list"></div>
+    <div id="lookbook-empty" class="empty" style="display:none">
+      <div class="display">No saved looks yet</div>
+      <p>When Style Me builds an outfit you like, save it here. Track what you wear so RIG learns your taste.</p>
+    </div>
+  </section>
+
+  <!-- ============ PROFILE ============ -->
+  <section id="view-profile" class="view">
+    <div class="section-head"><h2>Profile & Settings</h2></div>
+    <div class="stat-row" id="profile-stats"></div>
+
+    <div class="panel">
+      <h3>Style profile</h3>
+      <p class="hint">Everything here is fed to your stylist on every request. The more honest it is, the better the outfits.</p>
+      <div class="field"><label for="p-name">Name</label><input type="text" id="p-name" placeholder="Matteo"></div>
+      <div class="two-col">
+        <div class="field"><label for="p-top">Top size</label><input type="text" id="p-top" placeholder="L / XL"></div>
+        <div class="field"><label for="p-bottom">Pant size</label><input type="text" id="p-bottom" placeholder="33x32"></div>
+      </div>
+      <div class="two-col">
+        <div class="field"><label for="p-shoe">Shoe size</label><input type="text" id="p-shoe" placeholder="11"></div>
+        <div class="field"><label for="p-build">Build</label><input type="text" id="p-build" placeholder="athletic, broad shoulders"></div>
+      </div>
+      <div class="field"><label for="p-style">Style goals & taste</label><textarea id="p-style" placeholder="e.g. Clean classic menswear. Old-money athletic. No loud logos. Navy, white, olive, camel."></textarea></div>
+      <div class="field"><label for="p-avoid">Never put me in…</label><input type="text" id="p-avoid" placeholder="e.g. skinny jeans, graphic tees"></div>
+      <button class="btn block" id="btn-save-profile" style="margin-top:10px">Save profile</button>
+    </div>
+
+    <div class="panel">
+      <h3>AI connection</h3>
+      <p class="hint">RIG runs on Claude. Inside Claude.ai it connects automatically. On GitHub Pages or your phone's home screen, paste an Anthropic API key from <b>console.anthropic.com</b>. The key never leaves your device — it's stored locally and sent only to Anthropic.</p>
+      <div class="field"><label for="p-key">Anthropic API key</label><input type="password" id="p-key" placeholder="sk-ant-…"></div>
+      <button class="btn block ghost" id="btn-save-key" style="margin-top:8px">Save key</button>
+    </div>
+
+    <div class="panel">
+      <h3>Your data</h3>
+      <p class="hint">Everything lives on this device. Export a backup before switching phones or clearing your browser.</p>
+      <div class="two-col" style="margin-top:10px">
+        <button class="btn ghost" id="btn-export">Export backup</button>
+        <button class="btn ghost" id="btn-import">Import backup</button>
+      </div>
+      <input type="file" id="file-import" accept="application/json" hidden>
+      <button class="btn block danger" id="btn-wipe" style="margin-top:10px">Delete everything</button>
+    </div>
+  </section>
+</main>
+
+<!-- bottom navigation -->
+<nav>
+  <button data-view="closet" class="on" aria-label="Closet">
+    <svg viewBox="0 0 24 24"><path d="M12 4a2 2 0 1 1 2-2"/><path d="M12 4 3 12h18L12 4z"/><path d="M3 12v8h18v-8"/></svg>
+    Closet
+  </button>
+  <button data-view="style" aria-label="Style Me">
+    <svg viewBox="0 0 24 24"><path d="M12 3l1.9 4.6L18 9.5l-4.1 1.9L12 16l-1.9-4.6L6 9.5l4.1-1.9z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg>
+    Style Me
+  </button>
+  <button data-view="shop" aria-label="Shop">
+    <svg viewBox="0 0 24 24"><path d="M6 7h12l1 13H5L6 7z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/></svg>
+    Shop
+  </button>
+  <button data-view="lookbook" aria-label="Lookbook">
+    <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M4 9h16"/><path d="M9 9v11"/></svg>
+    Lookbook
+  </button>
+  <button data-view="profile" aria-label="Profile">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+    Profile
+  </button>
+</nav>
+
+<!-- item detail modal -->
+<div class="modal-bg" id="item-modal-bg">
+  <div class="modal" id="item-modal"></div>
+</div>
+
+<!-- API key modal -->
+<div class="modal-bg" id="key-modal-bg">
+  <div class="modal">
+    <div class="grabber"></div>
+    <h3 class="display" style="font-size:20px;margin-bottom:8px">Connect your stylist</h3>
+    <p style="font-size:13.5px;color:var(--slate);line-height:1.6">
+      RIG couldn't reach Claude automatically. If you're running this from GitHub Pages or your home screen,
+      paste an Anthropic API key (create one free at <b>console.anthropic.com</b> → API Keys).
+      It's stored only on this device.
+    </p>
+    <div class="field"><label for="key-input">Anthropic API key</label><input type="password" id="key-input" placeholder="sk-ant-…"></div>
+    <button class="btn block camel" id="key-save" style="margin-top:12px">Save & retry</button>
+    <button class="btn block ghost" id="key-cancel" style="margin-top:8px">Cancel</button>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+<script>
+/* =====================================================
+   RIG — data layer (IndexedDB with in-memory fallback)
+===================================================== */
+const DB_NAME = 'rig-db', DB_VER = 1;
+let dbi = null;
+const memStore = { items: new Map(), outfits: new Map(), settings: new Map() };
+
+function openDB(){
+  return new Promise(resolve => {
+    if(!('indexedDB' in window)) return resolve(null);
+    try{
+      const req = indexedDB.open(DB_NAME, DB_VER);
+      req.onupgradeneeded = e => {
+        const d = e.target.result;
+        if(!d.objectStoreNames.contains('items'))    d.createObjectStore('items',    {keyPath:'id'});
+        if(!d.objectStoreNames.contains('outfits'))  d.createObjectStore('outfits',  {keyPath:'id'});
+        if(!d.objectStoreNames.contains('settings')) d.createObjectStore('settings', {keyPath:'key'});
+      };
+      req.onsuccess = e => resolve(e.target.result);
+      req.onerror   = () => resolve(null);
+    }catch(_){ resolve(null); }
+  });
+}
+function dbPut(store, val){
+  if(!dbi){ memStore[store].set(val.id || val.key, val); return Promise.resolve(); }
+  return new Promise((res,rej)=>{
+    const tx = dbi.transaction(store,'readwrite');
+    tx.objectStore(store).put(val);
+    tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+  });
+}
+function dbDel(store, id){
+  if(!dbi){ memStore[store].delete(id); return Promise.resolve(); }
+  return new Promise((res,rej)=>{
+    const tx = dbi.transaction(store,'readwrite');
+    tx.objectStore(store).delete(id);
+    tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+  });
+}
+function dbAll(store){
+  if(!dbi) return Promise.resolve([...memStore[store].values()]);
+  return new Promise((res,rej)=>{
+    const req = dbi.transaction(store,'readonly').objectStore(store).getAll();
+    req.onsuccess = () => res(req.result || []);
+    req.onerror   = () => rej(req.error);
+  });
+}
+function dbClear(store){
+  if(!dbi){ memStore[store].clear(); return Promise.resolve(); }
+  return new Promise((res,rej)=>{
+    const tx = dbi.transaction(store,'readwrite');
+    tx.objectStore(store).clear();
+    tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+  });
+}
+
+/* =====================================================
+   state
+===================================================== */
+const state = {
+  items: [],            // garments
+  outfits: [],          // saved looks
+  profile: {},
+  apiKey: '',
+  filter: 'all',
+  anchorId: null,       // Style Me anchor
+  shopAnchorId: null,   // Shop anchor
+  occasion: null,
+  pendingRetry: null,   // fn to run after key entered
+};
+const CATEGORIES = ['top','bottom','outerwear','shoes','accessory','full-body'];
+const OCCASIONS = ['Casual day','Class','Nice dinner','Date night','Night out','Interview','Wedding guest','Travel day','Beach','Formal event'];
+
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $  = id => document.getElementById(id);
+
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+/* =====================================================
+   image compression (camera photos -> ~800px JPEG)
+===================================================== */
+function compressImage(file, maxDim = 900, quality = 0.82){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read that photo.'));
+    reader.onload = e => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('That file is not a readable image.'));
+      img.onload = () => {
+        let { width:w, height:h } = img;
+        if(Math.max(w,h) > maxDim){
+          const s = maxDim / Math.max(w,h);
+          w = Math.round(w*s); h = Math.round(h*s);
+        }
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(c.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+const dataUrlParts = d => {
+  const m = d.match(/^data:(.+?);base64,(.*)$/);
+  return m ? { media: m[1], b64: m[2] } : null;
+};
+
+/* =====================================================
+   Claude API
+   - Inside Claude.ai artifacts: works with no key.
+   - On GitHub Pages / home screen: needs the user's
+     Anthropic API key (stored locally, sent only to
+     api.anthropic.com over HTTPS).
+===================================================== */
+async function callClaude(content, maxTokensWithKey = 2000){
+  const key = state.apiKey;
+  const headers = { 'Content-Type': 'application/json' };
+  if(key){
+    headers['x-api-key'] = key;
+    headers['anthropic-version'] = '2023-06-01';
+    headers['anthropic-dangerous-direct-browser-access'] = 'true';
+  }
+  let res;
+  try{
+    res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: key ? maxTokensWithKey : 1000,
+        messages: [{ role:'user', content }]
+      })
+    });
+  }catch(_){
+    const err = new Error('network'); err.needsKey = !key; throw err;
+  }
+  if(!res.ok){
+    const err = new Error('api-' + res.status);
+    err.needsKey = (res.status === 401 || res.status === 403 || !key);
+    try{ const j = await res.json(); err.detail = j?.error?.message || ''; }catch(_){}
+    throw err;
+  }
+  const data = await res.json();
+  return (data.content || []).map(b => b.type === 'text' ? b.text : '').join('\n');
+}
+function parseClaudeJSON(text){
+  const clean = text.replace(/```json/gi,'').replace(/```/g,'').trim();
+  const a = clean.indexOf('{'), b = clean.lastIndexOf('}');
+  if(a === -1 || b === -1) throw new Error('no-json');
+  return JSON.parse(clean.slice(a, b+1));
+}
+function handleAIError(err, retryFn){
+  if(err && err.needsKey){
+    state.pendingRetry = retryFn || null;
+    $('key-modal-bg').classList.add('open');
+  }else{
+    toast('The stylist hit a snag' + (err?.detail ? ': ' + err.detail.slice(0,80) : '. Try again.'));
+  }
+}
+
+/* =====================================================
+   CLOSET
+===================================================== */
+async function addPhotos(files){
+  for(const file of files){
+    let img;
+    try{ img = await compressImage(file); }
+    catch(e){ toast(e.message); continue; }
+    const item = {
+      id: uid(), createdAt: Date.now(), img,
+      name: 'New piece', category: 'top', subcategory: '',
+      primaryColor: '', colors: [], formality: 3, seasons: [],
+      tags: [], notes: '', fav: false, laundry: false,
+      status: 'analyzing'
+    };
+    state.items.push(item);
+    await dbPut('items', item);
+    renderCloset();
+    analyzeItem(item); // fire and forget; UI shimmers meanwhile
+  }
+}
+
+async function analyzeItem(item){
+  const p = dataUrlParts(item.img);
+  const prompt =
+`You are a menswear cataloguer for a personal-styling app. Look at this photo of one clothing item and catalog it.
+Respond with ONLY a JSON object, no markdown, no preamble:
+{"name":"short natural name e.g. 'White Oxford Shirt'","category":"one of: top, bottom, outerwear, shoes, accessory, full-body","subcategory":"e.g. oxford shirt, chino, loafer","primary_color":"","colors":["all visible colors"],"formality":1-5 (1=gym/lounge, 3=smart casual, 5=formal),"seasons":["subset of spring,summer,fall,winter"],"tags":["3-6 style descriptors e.g. classic, preppy, technical"],"pairing_note":"one sentence on what this pairs well with"}`;
+  const content = p
+    ? [{type:'image', source:{type:'base64', media_type:p.media, data:p.b64}}, {type:'text', text:prompt}]
+    : [{type:'text', text:prompt}];
+  try{
+    const raw = await callClaude(content, 1000);
+    const j = parseClaudeJSON(raw);
+    item.name = j.name || item.name;
+    item.category = CATEGORIES.includes(j.category) ? j.category : item.category;
+    item.subcategory = j.subcategory || '';
+    item.primaryColor = j.primary_color || '';
+    item.colors = Array.isArray(j.colors) ? j.colors : [];
+    item.formality = Math.min(5, Math.max(1, parseInt(j.formality) || 3));
+    item.seasons = Array.isArray(j.seasons) ? j.seasons : [];
+    item.tags = Array.isArray(j.tags) ? j.tags : [];
+    item.notes = j.pairing_note || '';
+    item.status = 'ready';
+  }catch(err){
+    item.status = 'failed';
+    handleAIError(err, () => { item.status = 'analyzing'; renderCloset(); analyzeItem(item); });
+  }
+  await dbPut('items', item);
+  renderCloset();
+}
+
+function itemNumber(item){
+  const sorted = [...state.items].sort((a,b)=>a.createdAt-b.createdAt);
+  return String(sorted.findIndex(i=>i.id===item.id)+1).padStart(3,'0');
+}
+
+function renderCloset(){
+  const grid = $('closet-grid'), empty = $('closet-empty');
+  const ready = state.items;
+  $('closet-count').textContent = ready.length ? ready.length + (ready.length===1?' piece':' pieces') : '';
+  // filters
+  const filters = [
+    {k:'all', label:'All'}, {k:'top', label:'Tops'}, {k:'bottom', label:'Bottoms'},
+    {k:'outerwear', label:'Outerwear'}, {k:'shoes', label:'Shoes'}, {k:'accessory', label:'Accessories'},
+    {k:'full-body', label:'Full looks'}, {k:'fav', label:'★ Favorites'}, {k:'laundry', label:'In laundry'}
+  ];
+  $('closet-filters').innerHTML = filters.map(f =>
+    `<button class="chip ${state.filter===f.k?'on':''}" data-filter="${f.k}">${f.label}</button>`).join('');
+  $('closet-filters').querySelectorAll('.chip').forEach(c =>
+    c.onclick = () => { state.filter = c.dataset.filter; renderCloset(); });
+
+  let shown = ready;
+  if(state.filter === 'fav') shown = ready.filter(i=>i.fav);
+  else if(state.filter === 'laundry') shown = ready.filter(i=>i.laundry);
+  else if(state.filter !== 'all') shown = ready.filter(i=>i.category===state.filter);
+  shown = [...shown].sort((a,b)=>b.createdAt-a.createdAt);
+
+  empty.style.display = ready.length ? 'none' : 'block';
+  $('closet-filters').style.display = ready.length ? 'flex' : 'none';
+
+  grid.innerHTML = shown.map(i => `
+    <button class="garment ${i.status==='analyzing'?'analyzing':''}" data-id="${esc(i.id)}">
+      <div class="ph"><img src="${i.img}" alt="${esc(i.name)}" loading="lazy"></div>
+      <div class="badges">
+        <span>${i.laundry?'<span class="badge laundry">Laundry</span>':''}</span>
+        <span>${i.fav?'<span class="badge fav">★</span>':''}</span>
+      </div>
+      <div class="meta">
+        <div class="idx">№ ${itemNumber(i)}${i.status==='analyzing'?' · analyzing…':i.status==='failed'?' · tap to retry':''}</div>
+        <div class="nm">${esc(i.name)}</div>
+        <div class="sub">${esc([i.primaryColor, i.subcategory || i.category].filter(Boolean).join(' · '))}</div>
+      </div>
+    </button>`).join('');
+  grid.querySelectorAll('.garment').forEach(g => g.onclick = () => openItemModal(g.dataset.id));
+  renderAnchorChips(); renderShopAnchorChips(); renderProfileStats();
+}
+
+/* ---------- item modal ---------- */
+function openItemModal(id){
+  const i = state.items.find(x=>x.id===id); if(!i) return;
+  if(i.status === 'failed'){ i.status='analyzing'; dbPut('items', i); renderCloset(); analyzeItem(i); return; }
+  const m = $('item-modal');
+  m.innerHTML = `
+    <div class="grabber"></div>
+    <div class="m-photo"><img src="${i.img}" alt="${esc(i.name)}"></div>
+    <div class="eyebrow" style="margin-top:14px">№ ${itemNumber(i)} · ${esc(i.category)}</div>
+    <div class="field"><label for="e-name">Name</label><input type="text" id="e-name" value="${esc(i.name)}"></div>
+    <div class="two-col">
+      <div class="field"><label for="e-cat">Category</label>
+        <select id="e-cat">${CATEGORIES.map(c=>`<option value="${c}" ${i.category===c?'selected':''}>${c}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label for="e-form">Formality</label>
+        <select id="e-form">${[1,2,3,4,5].map(n=>`<option value="${n}" ${i.formality===n?'selected':''}>${n} — ${['gym/lounge','relaxed casual','smart casual','dressy','formal'][n-1]}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="field"><label for="e-sub">Type</label><input type="text" id="e-sub" value="${esc(i.subcategory)}" placeholder="oxford shirt, chino…"></div>
+    <div class="field"><label for="e-colors">Colors (comma separated)</label><input type="text" id="e-colors" value="${esc([i.primaryColor,...(i.colors||[]).filter(c=>c!==i.primaryColor)].filter(Boolean).join(', '))}"></div>
+    <div class="field"><label for="e-notes">Stylist notes</label><textarea id="e-notes">${esc(i.notes)}</textarea></div>
+    ${(i.tags||[]).length?`<div class="tag-pills">${i.tags.map(t=>`<span class="tag-pill">${esc(t)}</span>`).join('')}</div>`:''}
+    <div class="two-col" style="margin-top:16px">
+      <button class="btn ghost" id="e-fav">${i.fav?'★ Favorited':'☆ Favorite'}</button>
+      <button class="btn ghost" id="e-laundry">${i.laundry?'Back from laundry':'Send to laundry'}</button>
+    </div>
+    <button class="btn block" id="e-save" style="margin-top:10px">Save changes</button>
+    <div class="two-col" style="margin-top:10px">
+      <button class="btn ghost small" id="e-rean">Re-analyze photo</button>
+      <button class="btn danger small" id="e-del">Delete piece</button>
+    </div>`;
+  $('item-modal-bg').classList.add('open');
+
+  $('e-fav').onclick = async () => { i.fav = !i.fav; await dbPut('items', i); renderCloset(); openItemModal(id); };
+  $('e-laundry').onclick = async () => { i.laundry = !i.laundry; await dbPut('items', i); renderCloset(); openItemModal(id); toast(i.laundry?'Marked in laundry — excluded from outfits':'Back in rotation'); };
+  $('e-save').onclick = async () => {
+    i.name = $('e-name').value.trim() || i.name;
+    i.category = $('e-cat').value;
+    i.formality = parseInt($('e-form').value) || 3;
+    i.subcategory = $('e-sub').value.trim();
+    const cols = $('e-colors').value.split(',').map(s=>s.trim()).filter(Boolean);
+    i.primaryColor = cols[0] || ''; i.colors = cols;
+    i.notes = $('e-notes').value.trim();
+    await dbPut('items', i); renderCloset(); closeModals(); toast('Saved');
+  };
+  $('e-rean').onclick = () => { i.status='analyzing'; dbPut('items', i); closeModals(); renderCloset(); analyzeItem(i); };
+  $('e-del').onclick = async () => {
+    if(!confirm('Delete this piece from your closet?')) return;
+    state.items = state.items.filter(x=>x.id!==i.id);
+    if(state.anchorId===i.id) state.anchorId=null;
+    if(state.shopAnchorId===i.id) state.shopAnchorId=null;
+    await dbDel('items', i.id); renderCloset(); closeModals(); toast('Deleted');
+  };
+}
+function closeModals(){
+  document.querySelectorAll('.modal-bg').forEach(m=>m.classList.remove('open'));
+}
+
+/* =====================================================
+   STYLE ME
+===================================================== */
+function renderOccasionChips(){
+  $('occasion-chips').innerHTML = OCCASIONS.map(o =>
+    `<button class="chip ${state.occasion===o?'on camel-on':''}" data-o="${esc(o)}">${esc(o)}</button>`).join('');
+  $('occasion-chips').querySelectorAll('.chip').forEach(c =>
+    c.onclick = () => { state.occasion = state.occasion===c.dataset.o ? null : c.dataset.o; renderOccasionChips(); });
+}
+function availableItems(){ return state.items.filter(i => i.status==='ready' && !i.laundry); }
+
+function renderAnchorChips(){
+  const el = $('anchor-chips'); if(!el) return;
+  const avail = availableItems();
+  if(!avail.length){ el.innerHTML = '<p class="hint">Add pieces to your closet first.</p>'; return; }
+  el.innerHTML = `<button class="chip ${!state.anchorId?'on':''}" data-a="">No anchor</button>` +
+    avail.map(i=>`<button class="chip ${state.anchorId===i.id?'on':''}" data-a="${esc(i.id)}">${esc(i.name)}</button>`).join('');
+  el.querySelectorAll('.chip').forEach(c =>
+    c.onclick = () => { state.anchorId = c.dataset.a || null; renderAnchorChips(); });
+}
+
+function inventoryText(){
+  return availableItems().map(i =>
+    `[${i.id}] ${i.name} — ${i.category}${i.subcategory?' ('+i.subcategory+')':''}; colors: ${[i.primaryColor,...(i.colors||[])].filter(Boolean).filter((v,ix,a)=>a.indexOf(v)===ix).join('/') || 'unknown'}; formality ${i.formality}/5${i.seasons?.length?'; seasons: '+i.seasons.join(','):''}${i.tags?.length?'; style: '+i.tags.join(', '):''}${i.fav?'; USER FAVORITE':''}${i.notes?'; note: '+i.notes:''}`
+  ).join('\n');
+}
+function profileText(){
+  const p = state.profile;
+  const bits = [];
+  if(p.name) bits.push('Name: '+p.name);
+  if(p.build) bits.push('Build: '+p.build);
+  if(p.top||p.bottom||p.shoe) bits.push(`Sizes: top ${p.top||'?'}, pants ${p.bottom||'?'}, shoes ${p.shoe||'?'}`);
+  if(p.style) bits.push('Style goals: '+p.style);
+  if(p.avoid) bits.push('NEVER suggest: '+p.avoid);
+  return bits.length ? 'CLIENT PROFILE:\n'+bits.join('\n') : 'CLIENT PROFILE: young man, athletic build, classic taste.';
+}
+function showLoader(el, msg){
+  el.innerHTML = `<div class="loader"><div class="ring"></div><p>${esc(msg)}</p></div>`;
+  el.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+async function generateOutfits(){
+  const out = $('style-results');
+  const avail = availableItems();
+  if(avail.length < 3){ toast('Add at least 3 pieces to your closet first (and check the laundry filter).'); return; }
+  const occasion = $('occasion-custom').value.trim() || state.occasion || 'a versatile everyday look';
+  const dest = $('style-destination').value.trim();
+  const weather = $('style-weather').value.trim();
+  const anchor = state.anchorId ? state.items.find(i=>i.id===state.anchorId) : null;
+
+  showLoader(out, 'Your stylist is pulling looks off the rack…');
+  const prompt =
+`You are an elite personal stylist and menswear expert. Build outfits ONLY from the client's actual closet below.
+
+${profileText()}
+
+OCCASION: ${occasion}
+${dest ? 'LOCATION/DESTINATION: ' + dest + ' — factor in local dress culture and how locals actually dress.' : ''}
+${weather ? 'WEATHER: ' + weather : ''}
+${anchor ? 'ANCHOR PIECE (must appear in every outfit): [' + anchor.id + '] ' + anchor.name : ''}
+
+CLOSET INVENTORY (use item ids exactly as written in brackets):
+${inventoryText()}
+
+Rules:
+- Use ONLY item ids from the inventory. Every outfit needs a top and bottom (or a full-body piece) and shoes if any shoes exist in the closet.
+- Match formality to the occasion. Colors must genuinely work together — be a real stylist, not a matcher.
+- If the closet is missing something an outfit truly needs, list it under "missing" with a specific product search query.
+- Keep every text field to 1–2 tight sentences.
+
+Respond with ONLY JSON, no markdown:
+{"outfits":[{"title":"evocative 3-5 word name","item_ids":["..."],"why":"why this combination works for this occasion/place","tips":"styling details: tuck, cuff, sleeves, grooming","missing":[{"piece":"what to buy","search_query":"specific shopping search"}]}]}
+Give exactly 3 outfits (or fewer only if the closet truly cannot support 3 distinct looks).`;
+
+  try{
+    const raw = await callClaude([{type:'text', text:prompt}], 2500);
+    const j = parseClaudeJSON(raw);
+    renderOutfits(j.outfits || [], { occasion, dest });
+  }catch(err){
+    out.innerHTML = '';
+    handleAIError(err, generateOutfits);
+    if(!err.needsKey) out.innerHTML = `<div class="error-box">Couldn't build outfits — ${esc(err.detail || 'the connection dropped')}. Try again.</div>`;
+  }
+}
+
+function shopLinks(q){
+  const e = encodeURIComponent(q);
+  return `<div class="shop-links">
+    <a target="_blank" rel="noopener" href="https://www.google.com/search?tbm=shop&q=${e}">Google Shopping ↗</a>
+    <a target="_blank" rel="noopener" href="https://www.nordstrom.com/sr?keyword=${e}">Nordstrom ↗</a>
+    <a target="_blank" rel="noopener" href="https://www.asos.com/us/search/?q=${e}">ASOS ↗</a>
+  </div>`;
+}
+
+function outfitCardHTML(o, idx, opts = {}){
+  const pieces = (o.item_ids || o.itemIds || []).map(id => state.items.find(i=>i.id===id)).filter(Boolean);
+  const missing = o.missing || [];
+  return `
+  <article class="outfit">
+    <div class="o-head">
+      <div>
+        <div class="eyebrow">Look ${String(idx+1).padStart(2,'0')}${opts.occasion?' · '+esc(opts.occasion):''}</div>
+        <div class="o-title">${esc(o.title || 'Untitled look')}</div>
+      </div>
+      ${opts.saved ? `<span class="mono" style="color:var(--slate)">${o.wearCount ? 'Worn ×'+o.wearCount : 'Not worn yet'}</span>` : ''}
+    </div>
+    <div class="o-pieces">${pieces.map(p=>`
+      <div class="o-piece"><div class="pph"><img src="${p.img}" alt="${esc(p.name)}" loading="lazy"></div><div class="pnm">${esc(p.name)}</div></div>`).join('') || '<p class="hint">Pieces no longer in closet.</p>'}
+    </div>
+    ${o.why ? `<p class="o-why">${esc(o.why)}</p>` : ''}
+    ${o.tips ? `<p class="o-tips"><b>Styling:</b> ${esc(o.tips)}</p>` : ''}
+    ${missing.length ? `<div class="o-missing"><span class="mono">Complete the look</span>${missing.map(m=>`
+      <div style="margin-top:8px"><div style="font-size:13px;font-weight:600">${esc(m.piece)}</div>${shopLinks(m.search_query || m.piece)}</div>`).join('')}</div>` : ''}
+    <div class="o-actions">
+      ${opts.saved
+        ? `<button class="btn small camel" data-wear="${esc(o.id)}">Wore it today</button>
+           <button class="btn small danger" data-delout="${esc(o.id)}">Remove</button>`
+        : `<button class="btn small" data-save="${idx}">Save to Lookbook</button>`}
+    </div>
+  </article>`;
+}
+
+let lastGenerated = [];
+function renderOutfits(outfits, ctx){
+  lastGenerated = outfits.map(o => ({...o, occasion: ctx.occasion, dest: ctx.dest}));
+  const out = $('style-results');
+  if(!outfits.length){ out.innerHTML = '<div class="error-box">The stylist came back empty-handed — try a different occasion or add more pieces.</div>'; return; }
+  out.innerHTML = `<div class="eyebrow" style="margin-bottom:10px">${outfits.length} looks for ${esc(ctx.occasion)}${ctx.dest?' · '+esc(ctx.dest):''}</div>` +
+    outfits.map((o,ix)=>outfitCardHTML(o, ix, {occasion:''})).join('');
+  out.querySelectorAll('[data-save]').forEach(b => b.onclick = () => saveOutfit(parseInt(b.dataset.save), b));
+}
+async function saveOutfit(idx, btn){
+  const o = lastGenerated[idx]; if(!o) return;
+  const saved = {
+    id: uid(), createdAt: Date.now(),
+    title: o.title || 'Saved look',
+    itemIds: (o.item_ids || []).filter(id => state.items.some(i=>i.id===id)),
+    why: o.why || '', tips: o.tips || '', missing: o.missing || [],
+    occasion: o.occasion || '', dest: o.dest || '', wearCount: 0
+  };
+  state.outfits.push(saved);
+  await dbPut('outfits', saved);
+  if(btn){ btn.textContent = 'Saved ✓'; btn.disabled = true; }
+  renderLookbook(); toast('Saved to Lookbook');
+}
+
+/* ---------- packing mode ---------- */
+async function generatePacking(){
+  const out = $('style-results');
+  const avail = availableItems();
+  if(avail.length < 3){ toast('Add at least 3 pieces to your closet first.'); return; }
+  const dest = $('style-destination').value.trim();
+  if(!dest){ toast('Enter a destination in "Where in the world?" first.'); $('style-destination').focus(); return; }
+  const days = $('trip-days').value.trim() || '5';
+  const occasion = $('occasion-custom').value.trim() || state.occasion || 'a mix of daytime exploring and nice dinners';
+  const weather = $('style-weather').value.trim();
+
+  showLoader(out, 'Packing your capsule for ' + dest + '…');
+  const prompt =
+`You are an elite travel stylist. Build a packing capsule from the client's actual closet.
+
+${profileText()}
+
+TRIP: ${days} days in ${dest}. Planned activities: ${occasion}. ${weather ? 'Expected weather: ' + weather + '.' : 'Assume seasonal weather for the destination right now.'}
+Factor in local dress culture — pack what will look right there, not touristy.
+
+CLOSET INVENTORY (use item ids exactly as written in brackets):
+${inventoryText()}
+
+Rules:
+- Choose a tight capsule (pieces that mix and match) using ONLY inventory ids.
+- Plan one outfit per day/slot using only capsule pieces.
+- List anything genuinely missing with a specific shopping search query.
+- Keep text fields to 1-2 tight sentences.
+
+Respond with ONLY JSON, no markdown:
+{"capsule_item_ids":["..."],"plan":[{"slot":"Day 1 — daytime","title":"look name","item_ids":["..."]}],"missing":[{"piece":"","search_query":""}],"tips":"packing & styling advice for this destination"}`;
+
+  try{
+    const raw = await callClaude([{type:'text', text:prompt}], 2500);
+    const j = parseClaudeJSON(raw);
+    renderPacking(j, dest, days);
+  }catch(err){
+    out.innerHTML = '';
+    handleAIError(err, generatePacking);
+    if(!err.needsKey) out.innerHTML = `<div class="error-box">Couldn't build the packing list — try again.</div>`;
+  }
+}
+function renderPacking(j, dest, days){
+  const out = $('style-results');
+  const capsule = (j.capsule_item_ids || []).map(id=>state.items.find(i=>i.id===id)).filter(Boolean);
+  const plan = j.plan || [];
+  const missing = j.missing || [];
+  out.innerHTML = `
+    <div class="eyebrow" style="margin-bottom:10px">Capsule · ${esc(days)} days · ${esc(dest)}</div>
+    <div class="outfit">
+      <div class="o-title" style="margin-bottom:12px">Pack these ${capsule.length} pieces</div>
+      <div class="o-pieces">${capsule.map(p=>`
+        <div class="o-piece"><div class="pph"><img src="${p.img}" alt="${esc(p.name)}"></div><div class="pnm">${esc(p.name)}</div></div>`).join('')}</div>
+      ${j.tips?`<p class="o-why">${esc(j.tips)}</p>`:''}
+    </div>
+    ${plan.map((o,ix)=>outfitCardHTML({...o, missing:[]}, ix, {occasion:o.slot})).join('')}
+    ${missing.length?`<div class="outfit"><div class="o-missing"><span class="mono">Worth buying before you go</span>${missing.map(m=>`
+      <div style="margin-top:8px"><div style="font-size:13px;font-weight:600">${esc(m.piece)}</div>${shopLinks(m.search_query||m.piece)}</div>`).join('')}</div></div>`:''}`;
+  // allow saving each planned look
+  lastGenerated = plan.map(o=>({...o, occasion:(o.slot||'Trip')+' · '+dest, dest}));
+  out.querySelectorAll('[data-save]').forEach(b => b.onclick = () => saveOutfit(parseInt(b.dataset.save), b));
+}
+
+/* =====================================================
+   SHOP THE GAP
+===================================================== */
+function renderShopAnchorChips(){
+  const el = $('shop-anchor-chips'); if(!el) return;
+  const avail = state.items.filter(i=>i.status==='ready');
+  if(!avail.length){ el.innerHTML = '<p class="hint">Add pieces to your closet first.</p>'; return; }
+  el.innerHTML = avail.map(i=>`<button class="chip ${state.shopAnchorId===i.id?'on camel-on':''}" data-s="${esc(i.id)}">${esc(i.name)}</button>`).join('');
+  el.querySelectorAll('.chip').forEach(c =>
+    c.onclick = () => { state.shopAnchorId = state.shopAnchorId===c.dataset.s ? null : c.dataset.s; renderShopAnchorChips(); });
+}
+async function shopTheGap(){
+  const out = $('shop-results');
+  const anchor = state.items.find(i=>i.id===state.shopAnchorId);
+  if(!anchor){ toast('Pick a piece to build around first.'); return; }
+  const goal = $('shop-goal').value.trim();
+  const budget = $('shop-budget').value;
+
+  showLoader(out, 'Scouting pieces that work with your ' + anchor.name + '…');
+  const p = dataUrlParts(anchor.img);
+  const prompt =
+`You are an elite personal shopper for menswear. The client owns the item in the photo and wants to buy new pieces that pair with it.
+
+${profileText()}
+
+ANCHOR ITEM THEY OWN: ${anchor.name} — ${anchor.category}${anchor.subcategory?' ('+anchor.subcategory+')':''}, colors ${[anchor.primaryColor,...(anchor.colors||[])].filter(Boolean).join('/')}, formality ${anchor.formality}/5.
+${goal ? 'CLIENT IS LOOKING FOR: ' + goal : 'Suggest whichever categories would best complete outfits around this piece.'}
+BUDGET: ${budget}.
+
+THEY ALREADY OWN (do not suggest near-duplicates of these):
+${inventoryText() || 'nothing else catalogued yet'}
+
+Give 4-5 specific purchasable suggestions. Be precise about color, fabric, and cut so a store search finds the exact thing. Each search_query must be a realistic shopping search under 8 words (e.g. "men's sage green cotton chino straight fit").
+
+Respond with ONLY JSON, no markdown:
+{"suggestions":[{"piece":"short name e.g. 'Stone Wide-Leg Chinos'","description":"exact color/fabric/cut to look for","why":"why it works with the anchor and their closet","search_query":"..."}]}`;
+  const content = p
+    ? [{type:'image', source:{type:'base64', media_type:p.media, data:p.b64}}, {type:'text', text:prompt}]
+    : [{type:'text', text:prompt}];
+  try{
+    const raw = await callClaude(content, 2000);
+    const j = parseClaudeJSON(raw);
+    const sugg = j.suggestions || [];
+    out.innerHTML = sugg.length
+      ? `<div class="eyebrow" style="margin:6px 0 10px">To pair with your ${esc(anchor.name)}</div>` +
+        sugg.map(s=>`
+        <div class="shop-card">
+          <div class="sc-type">${esc(s.piece)}</div>
+          <p class="sc-desc">${esc(s.description)}</p>
+          <p class="sc-why">${esc(s.why)}</p>
+          ${shopLinks(s.search_query || s.piece)}
+        </div>`).join('')
+      : '<div class="error-box">No suggestions came back — try describing what you\'re missing.</div>';
+  }catch(err){
+    out.innerHTML = '';
+    handleAIError(err, shopTheGap);
+    if(!err.needsKey) out.innerHTML = `<div class="error-box">Couldn't reach the personal shopper — try again.</div>`;
+  }
+}
+
+/* =====================================================
+   LOOKBOOK
+===================================================== */
+function renderLookbook(){
+  const list = $('lookbook-list'), empty = $('lookbook-empty');
+  const looks = [...state.outfits].sort((a,b)=>b.createdAt-a.createdAt);
+  $('lookbook-count').textContent = looks.length ? looks.length + (looks.length===1?' look':' looks') : '';
+  empty.style.display = looks.length ? 'none' : 'block';
+  list.innerHTML = looks.map((o,ix)=>outfitCardHTML(o, ix, {saved:true, occasion:o.occasion + (o.dest?' · '+o.dest:'')})).join('');
+  list.querySelectorAll('[data-wear]').forEach(b => b.onclick = async () => {
+    const o = state.outfits.find(x=>x.id===b.dataset.wear); if(!o) return;
+    o.wearCount = (o.wearCount||0)+1; await dbPut('outfits', o); renderLookbook(); toast('Logged — looking sharp');
+  });
+  list.querySelectorAll('[data-delout]').forEach(b => b.onclick = async () => {
+    if(!confirm('Remove this look?')) return;
+    state.outfits = state.outfits.filter(x=>x.id!==b.dataset.delout);
+    await dbDel('outfits', b.dataset.delout); renderLookbook();
+  });
+  renderProfileStats();
+}
+
+/* =====================================================
+   PROFILE / SETTINGS
+===================================================== */
+function renderProfileStats(){
+  const el = $('profile-stats'); if(!el) return;
+  const worn = state.outfits.reduce((s,o)=>s+(o.wearCount||0),0);
+  el.innerHTML = `
+    <div class="stat"><div class="n">${state.items.length}</div><div class="l">Pieces</div></div>
+    <div class="stat"><div class="n">${state.outfits.length}</div><div class="l">Saved looks</div></div>
+    <div class="stat"><div class="n">${worn}</div><div class="l">Outfits worn</div></div>`;
+}
+function loadProfileForm(){
+  const p = state.profile;
+  $('p-name').value = p.name||''; $('p-top').value = p.top||''; $('p-bottom').value = p.bottom||'';
+  $('p-shoe').value = p.shoe||''; $('p-build').value = p.build||'';
+  $('p-style').value = p.style||''; $('p-avoid').value = p.avoid||'';
+  $('p-key').value = state.apiKey||'';
+}
+async function saveProfile(){
+  state.profile = {
+    name: $('p-name').value.trim(), top: $('p-top').value.trim(), bottom: $('p-bottom').value.trim(),
+    shoe: $('p-shoe').value.trim(), build: $('p-build').value.trim(),
+    style: $('p-style').value.trim(), avoid: $('p-avoid').value.trim()
+  };
+  await dbPut('settings', {key:'profile', value: state.profile});
+  toast('Profile saved — your stylist knows you now');
+}
+async function saveKey(fromModal){
+  const v = (fromModal ? $('key-input') : $('p-key')).value.trim();
+  state.apiKey = v;
+  await dbPut('settings', {key:'apiKey', value: v});
+  if(fromModal){
+    closeModals();
+    if(v && state.pendingRetry){ const fn = state.pendingRetry; state.pendingRetry = null; fn(); }
+  }
+  toast(v ? 'Key saved' : 'Key cleared');
+  loadProfileForm();
+}
+
+/* ---------- backup ---------- */
+async function exportData(){
+  const blob = new Blob([JSON.stringify({
+    version: 1, exportedAt: new Date().toISOString(),
+    items: state.items, outfits: state.outfits, profile: state.profile
+  })], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'rig-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('Backup downloaded');
+}
+async function importData(file){
+  try{
+    const j = JSON.parse(await file.text());
+    if(!Array.isArray(j.items)) throw new Error();
+    for(const i of j.items){ if(i.id && i.img){ i.status = i.status==='analyzing'?'ready':(i.status||'ready'); await dbPut('items', i); } }
+    for(const o of (j.outfits||[])){ if(o.id) await dbPut('outfits', o); }
+    if(j.profile){ state.profile = j.profile; await dbPut('settings', {key:'profile', value:j.profile}); }
+    state.items = await dbAll('items'); state.outfits = await dbAll('outfits');
+    renderCloset(); renderLookbook(); loadProfileForm();
+    toast('Backup restored — ' + j.items.length + ' pieces');
+  }catch(_){ toast('That file isn\'t a RIG backup.'); }
+}
+async function wipeAll(){
+  if(!confirm('Delete your entire closet, lookbook, and profile? This cannot be undone.')) return;
+  if(!confirm('Last check — really delete everything?')) return;
+  await dbClear('items'); await dbClear('outfits'); await dbClear('settings');
+  state.items = []; state.outfits = []; state.profile = {}; state.apiKey = '';
+  state.anchorId = state.shopAnchorId = null;
+  renderCloset(); renderLookbook(); loadProfileForm(); toast('Fresh start');
+}
+
+/* =====================================================
+   navigation & init
+===================================================== */
+function switchView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  $('view-'+name).classList.add('active');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on', b.dataset.view===name));
+  window.scrollTo({top:0});
+}
+
+async function init(){
+  dbi = await openDB();
+  state.items   = await dbAll('items');
+  // anything stuck mid-analysis from a closed tab -> mark failed so user can retry
+  state.items.forEach(i => { if(i.status==='analyzing') i.status='failed'; });
+  state.outfits = await dbAll('outfits');
+  const settings = await dbAll('settings');
+  for(const s of settings){
+    if(s.key==='profile') state.profile = s.value || {};
+    if(s.key==='apiKey')  state.apiKey  = s.value || '';
+  }
+
+  renderCloset(); renderOccasionChips(); renderLookbook(); loadProfileForm();
+
+  // nav
+  document.querySelectorAll('nav button').forEach(b => b.onclick = () => switchView(b.dataset.view));
+
+  // closet inputs
+  $('btn-camera').onclick = () => $('file-camera').click();
+  $('btn-upload').onclick = () => $('file-upload').click();
+  $('file-camera').onchange = e => { if(e.target.files.length) addPhotos([...e.target.files]); e.target.value=''; };
+  $('file-upload').onchange = e => { if(e.target.files.length) addPhotos([...e.target.files]); e.target.value=''; };
+
+  // style
+  $('btn-generate').onclick = generateOutfits;
+  $('btn-pack').onclick = generatePacking;
+
+  // shop
+  $('btn-shop').onclick = shopTheGap;
+
+  // profile
+  $('btn-save-profile').onclick = saveProfile;
+  $('btn-save-key').onclick = () => saveKey(false);
+  $('btn-export').onclick = exportData;
+  $('btn-import').onclick = () => $('file-import').click();
+  $('file-import').onchange = e => { if(e.target.files[0]) importData(e.target.files[0]); e.target.value=''; };
+  $('btn-wipe').onclick = wipeAll;
+
+  // modals
+  $('item-modal-bg').addEventListener('click', e => { if(e.target.id==='item-modal-bg') closeModals(); });
+  $('key-modal-bg').addEventListener('click', e => { if(e.target.id==='key-modal-bg') closeModals(); });
+  $('key-save').onclick = () => saveKey(true);
+  $('key-cancel').onclick = closeModals;
+
+  // offline shell (safe to fail on unsupported browsers / file://)
+  if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+    try{ navigator.serviceWorker.register('sw.js'); }catch(_){}
+  }
+}
+init();
+</script>
+</body>
+</html>
